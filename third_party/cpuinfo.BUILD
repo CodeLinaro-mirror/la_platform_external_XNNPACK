@@ -42,7 +42,6 @@ ARM_SRCS = [
 # Platform-specific sources and headers
 LINUX_SRCS = [
     "src/linux/cpulist.c",
-    "src/linux/current.c",
     "src/linux/multiline.c",
     "src/linux/processors.c",
     "src/linux/smallfile.c",
@@ -58,10 +57,6 @@ MACH_SRCS = [
 
 EMSCRIPTEN_SRCS = [
     "src/emscripten/init.c",
-]
-
-PNACL_SRCS = [
-    "src/pnacl/init.c",
 ]
 
 LINUX_X86_SRCS = [
@@ -102,7 +97,13 @@ cc_library(
     name = "cpuinfo_impl",
     srcs = select({
         ":linux_x86_64": COMMON_SRCS + X86_SRCS + LINUX_SRCS + LINUX_X86_SRCS,
+        ":linux_arm": COMMON_SRCS + ARM_SRCS + LINUX_SRCS + LINUX_ARM32_SRCS,
+        ":linux_armeabi": COMMON_SRCS + ARM_SRCS + LINUX_SRCS + LINUX_ARM32_SRCS,
+        ":linux_armhf": COMMON_SRCS + ARM_SRCS + LINUX_SRCS + LINUX_ARM32_SRCS,
+        ":linux_armv7a": COMMON_SRCS + ARM_SRCS + LINUX_SRCS + LINUX_ARM32_SRCS,
+        ":linux_aarch64": COMMON_SRCS + ARM_SRCS + LINUX_SRCS + LINUX_ARM64_SRCS,
         ":macos_x86_64": COMMON_SRCS + X86_SRCS + MACH_SRCS + MACH_X86_SRCS,
+        ":windows_x86_64": COMMON_SRCS + X86_SRCS + WINDOWS_X86_SRCS,
         ":android_armv7": COMMON_SRCS + ARM_SRCS + LINUX_SRCS + LINUX_ARM32_SRCS + ANDROID_ARM_SRCS,
         ":android_arm64": COMMON_SRCS + ARM_SRCS + LINUX_SRCS + LINUX_ARM64_SRCS + ANDROID_ARM_SRCS,
         ":android_x86": COMMON_SRCS + X86_SRCS + LINUX_SRCS + LINUX_X86_SRCS,
@@ -118,9 +119,12 @@ cc_library(
         ":watchos_arm64_32": COMMON_SRCS + MACH_SRCS + MACH_ARM_SRCS,
         ":tvos_x86_64": COMMON_SRCS + X86_SRCS + MACH_SRCS + MACH_X86_SRCS,
         ":tvos_arm64": COMMON_SRCS + MACH_SRCS + MACH_ARM_SRCS,
-        ":emscripten_wasm": COMMON_SRCS + EMSCRIPTEN_SRCS,
+        ":emscripten": COMMON_SRCS + EMSCRIPTEN_SRCS,
     }),
-    copts = C99OPTS + [
+    copts = select({
+        ":windows_x86_64": [],
+        "//conditions:default": C99OPTS,
+    }) + [
         "-Iexternal/cpuinfo/include",
         "-Iexternal/cpuinfo/src",
     ],
@@ -164,7 +168,31 @@ cc_library(
 config_setting(
     name = "linux_x86_64",
     values = {"cpu": "k8"},
-    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "linux_arm",
+    values = {"cpu": "arm"},
+)
+
+config_setting(
+    name = "linux_armeabi",
+    values = {"cpu": "armeabi"},
+)
+
+config_setting(
+    name = "linux_armhf",
+    values = {"cpu": "armhf"},
+)
+
+config_setting(
+    name = "linux_armv7a",
+    values = {"cpu": "armv7a"},
+)
+
+config_setting(
+    name = "linux_aarch64",
+    values = {"cpu": "aarch64"},
 )
 
 config_setting(
@@ -173,6 +201,11 @@ config_setting(
         "apple_platform_type": "macos",
         "cpu": "darwin",
     },
+)
+
+config_setting(
+    name = "windows_x86_64",
+    values = {"cpu": "x64_windows"},
 )
 
 config_setting(
@@ -214,7 +247,7 @@ config_setting(
 config_setting(
     name = "ios_armv7",
     values = {
-        "crosstool_top": "//tools/osx/crosstool:crosstool",
+        "apple_platform_type": "ios",
         "cpu": "ios_armv7",
     },
 )
@@ -222,7 +255,7 @@ config_setting(
 config_setting(
     name = "ios_arm64",
     values = {
-        "crosstool_top": "//tools/osx/crosstool:crosstool",
+        "apple_platform_type": "ios",
         "cpu": "ios_arm64",
     },
 )
@@ -230,7 +263,7 @@ config_setting(
 config_setting(
     name = "ios_arm64e",
     values = {
-        "crosstool_top": "//tools/osx/crosstool:crosstool",
+        "apple_platform_type": "ios",
         "cpu": "ios_arm64e",
     },
 )
@@ -238,7 +271,7 @@ config_setting(
 config_setting(
     name = "ios_x86",
     values = {
-        "crosstool_top": "//tools/osx/crosstool:crosstool",
+        "apple_platform_type": "ios",
         "cpu": "ios_i386",
     },
 )
@@ -246,7 +279,7 @@ config_setting(
 config_setting(
     name = "ios_x86_64",
     values = {
-        "crosstool_top": "//tools/osx/crosstool:crosstool",
+        "apple_platform_type": "ios",
         "cpu": "ios_x86_64",
     },
 )
@@ -254,7 +287,7 @@ config_setting(
 config_setting(
     name = "watchos_armv7k",
     values = {
-        "crosstool_top": "//tools/osx/crosstool:crosstool",
+        "apple_platform_type": "watchos",
         "cpu": "watchos_armv7k",
     },
 )
@@ -262,7 +295,7 @@ config_setting(
 config_setting(
     name = "watchos_arm64_32",
     values = {
-        "crosstool_top": "//tools/osx/crosstool:crosstool",
+        "apple_platform_type": "watchos",
         "cpu": "watchos_arm64_32",
     },
 )
@@ -270,7 +303,7 @@ config_setting(
 config_setting(
     name = "watchos_x86",
     values = {
-        "crosstool_top": "//tools/osx/crosstool:crosstool",
+        "apple_platform_type": "watchos",
         "cpu": "watchos_i386",
     },
 )
@@ -278,7 +311,7 @@ config_setting(
 config_setting(
     name = "watchos_x86_64",
     values = {
-        "crosstool_top": "//tools/osx/crosstool:crosstool",
+        "apple_platform_type": "watchos",
         "cpu": "watchos_x86_64",
     },
 )
@@ -286,7 +319,7 @@ config_setting(
 config_setting(
     name = "tvos_arm64",
     values = {
-        "crosstool_top": "//tools/osx/crosstool:crosstool",
+        "apple_platform_type": "tvos",
         "cpu": "tvos_arm64",
     },
 )
@@ -294,29 +327,12 @@ config_setting(
 config_setting(
     name = "tvos_x86_64",
     values = {
-        "crosstool_top": "//tools/osx/crosstool:crosstool",
+        "apple_platform_type": "tvos",
         "cpu": "tvos_x86_64",
     },
 )
 
 config_setting(
-    name = "emscripten_wasm",
-    values = {
-        "cpu": "wasm",
-    },
-)
-
-config_setting(
-    name = "emscripten_wasmsimd",
-    values = {
-        "cpu": "wasm",
-        "features": "wasm_simd",
-    },
-)
-
-config_setting(
-    name = "emscripten_asmjs",
-    values = {
-        "cpu": "asmjs",
-    },
+    name = "emscripten",
+    values = {"crosstool_top": "//toolchain:emscripten"},
 )

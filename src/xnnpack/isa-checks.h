@@ -13,7 +13,7 @@
 #include <xnnpack/common.h>
 
 
-#if XNN_ARCH_PNACL || XNN_ARCH_WASMSIMD
+#if XNN_ARCH_WASMSIMD
   #define TEST_REQUIRES_PSIMD
 #else
   #define TEST_REQUIRES_PSIMD \
@@ -83,6 +83,13 @@
 #define TEST_REQUIRES_ARM_NEON_FMA \
   do { \
     if (!cpuinfo_initialize() || !cpuinfo_has_arm_neon_fma()) { \
+      GTEST_SKIP(); \
+    } \
+  } while (0)
+
+#define TEST_REQUIRES_ARM_NEON_V8 \
+  do { \
+    if (!cpuinfo_initialize() || !cpuinfo_has_arm_neon_v8()) { \
       GTEST_SKIP(); \
     } \
   } while (0)
