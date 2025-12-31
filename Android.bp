@@ -8560,6 +8560,7 @@ cc_defaults {
         "include",
         "src",
     ],
+    cpp_std: "c++20",
     cflags: [
         "-std=c99",
         "-DXNN_LOG_LEVEL=2",
